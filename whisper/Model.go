@@ -77,7 +77,7 @@ func (this *Model) createContext() (*iContext, error) {
 	return context, nil
 }
 
-func (this *Model) isMultilingual() bool {
+func (this *Model) IsMultilingual() bool {
 	ret, _, _ := syscall.SyscallN(
 		this.cStruct.lpVtbl.isMultilingual,
 		uintptr(unsafe.Pointer(this.cStruct)),

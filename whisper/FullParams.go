@@ -14,16 +14,16 @@ const (
 type eFullParamsFlags uint32
 
 const (
-	flagNone            eFullParamsFlags = 0
-	flagTranslate                        = 1 << 0
-	flagNoContext                        = 1 << 1
-	flagSingleSegment                    = 1 << 2
-	flagPrintSpecial                     = 1 << 3
-	flagPrintProgress                    = 1 << 4
-	flagPrintRealtime                    = 1 << 5
-	flagPrintTimestamps                  = 1 << 6
-	flagTokenTimestamps                  = 1 << 7 // // Experimental
-	flagSpeedupAudio                     = 1 << 8
+	FlagNone            eFullParamsFlags = 0
+	FlagTranslate                        = 1 << 0
+	FlagNoContext                        = 1 << 1
+	FlagSingleSegment                    = 1 << 2
+	FlagPrintSpecial                     = 1 << 3
+	FlagPrintProgress                    = 1 << 4
+	FlagPrintRealtime                    = 1 << 5
+	FlagPrintTimestamps                  = 1 << 6
+	FlagTokenTimestamps                  = 1 << 7 // Experimental
+	FlagSpeedupAudio                     = 1 << 8
 )
 
 type FullParams struct {
@@ -81,7 +81,7 @@ func (this *FullParams) TestDefaultsOK() bool {
 		return false
 	}
 
-	if this.cStruct.Flags != (flagPrintProgress | flagPrintTimestamps) {
+	if this.cStruct.Flags != (FlagPrintProgress | FlagPrintTimestamps) {
 		return false
 	}
 

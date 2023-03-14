@@ -3,7 +3,8 @@ package main
 import (
 	"fmt"
 
-	whisper "github.com/jaybinks/goConstmeWhisper/whisper"
+	"github.com/jaybinks/goConstmeWhisper/whisper"
+	//whisper "github.com/jaybinks/goConstmeWhisper"
 )
 
 func main() {

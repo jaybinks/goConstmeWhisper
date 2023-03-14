@@ -14,21 +14,21 @@ type uuid [16]byte
 type eResultFlags uint32
 
 const (
-	rfNone eResultFlags = 0
+	RfNone eResultFlags = 0
 
 	// Return individual tokens in addition to the segments
-	rfTokens = 1
+	RfTokens = 1
 
 	// Return timestamps
-	rfTimestamps = 2
+	RfTimestamps = 2
 
 	// Create a new COM object for the results.
 	// Without this flag, the context returns a pointer to the COM object stored in the context.
-	// The content of that object is replaced every time you call iContext.getResults method
-	rfNewObject = 0x100
+	// The content of that object is replaced every time you call IContext.getResults method
+	RfNewObject = 0x100
 )
 
-type iContextVtbl struct {
+type IContextVtbl struct {
 	QueryInterface uintptr
 	AddRef         uintptr
 	Release        uintptr
@@ -44,8 +44,8 @@ type iContextVtbl struct {
 	TimingsReset      uintptr
 }
 
-type iContext struct {
-	lpVtbl *iContextVtbl
+type IContext struct {
+	lpVtbl *IContextVtbl
 }
 
 //type sFullParams struct{}
@@ -64,10 +64,10 @@ type eSpeakerChannel int32
 
 //type eSamplingStrategy int32
 
-// Create a new iContext instance
-func newIContext() *iContext {
-	return &iContext{
-		lpVtbl: &iContextVtbl{
+// Create a new IContext instance
+func newIContext() *IContext {
+	return &IContext{
+		lpVtbl: &IContextVtbl{
 			QueryInterface:    0,
 			AddRef:            0,
 			Release:           0,
@@ -84,7 +84,7 @@ func newIContext() *iContext {
 	}
 }
 
-func (context *iContext) TimingsPrint() error {
+func (context *IContext) TimingsPrint() error {
 
 	//  TimingsPrint();
 	ret, _, _ := syscall.SyscallN(
@@ -102,7 +102,7 @@ func (context *iContext) TimingsPrint() error {
 
 // Run the entire model: PCM -> log mel spectrogram -> encoder -> decoder -> text
 // Uses the specified decoding strategy to obtain the text.
-func (context *iContext) RunFull(params *FullParams, buffer *iAudioBuffer) error {
+func (context *IContext) RunFull(params *FullParams, buffer *iAudioBuffer) error {
 
 	//  runFull( const sFullParams& params, const iAudioBuffer* buffer );
 	ret, _, _ := syscall.SyscallN(
@@ -120,7 +120,7 @@ func (context *iContext) RunFull(params *FullParams, buffer *iAudioBuffer) error
 	return nil
 }
 
-func (this *iContext) AddRef() int32 {
+func (this *IContext) AddRef() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.AddRef,
 		1,
@@ -130,7 +130,7 @@ func (this *iContext) AddRef() int32 {
 	return int32(ret)
 }
 
-func (this *iContext) Release() int32 {
+func (this *IContext) Release() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.Release,
 		1,
@@ -147,7 +147,7 @@ Returns E_POINTER if null pointer provided in params
 Initialises params to all 0
 sets values in struct, does not malloc
 */
-func (context *iContext) FullDefaultParams(strategy eSamplingStrategy) (*FullParams, error) {
+func (context *IContext) FullDefaultParams(strategy eSamplingStrategy) (*FullParams, error) {
 
 	/*
 		ERR : unreadable Only part of a ReadProcessMemory or WriteProcessMemory request was completed
@@ -190,7 +190,7 @@ func (context *iContext) FullDefaultParams(strategy eSamplingStrategy) (*FullPar
 	return nil, nil
 }
 
-func (context *iContext) GetModel() (*_IModel, error) {
+func (context *IContext) GetModel() (*_IModel, error) {
 
 	var modelptr *_IModel
 
@@ -221,7 +221,7 @@ func (context *iContext) GetModel() (*_IModel, error) {
 // Not really implemented / tested
 // ************************************************************************************************************************************************
 
-func (context *iContext) RunStreamed(params *FullParams, progress *sProgressSink, reader *iAudioReader) uintptr {
+func (context *IContext) RunStreamed(params *FullParams, progress *sProgressSink, reader *iAudioReader) uintptr {
 	ret, _, _ := syscall.SyscallN(
 		context.lpVtbl.RunStreamed,
 		uintptr(unsafe.Pointer(context)),
@@ -232,7 +232,7 @@ func (context *iContext) RunStreamed(params *FullParams, progress *sProgressSink
 	return ret
 }
 
-func (context *iContext) RunCapture(params *FullParams, callbacks *sCaptureCallbacks, reader *iAudioCapture) uintptr {
+func (context *IContext) RunCapture(params *FullParams, callbacks *sCaptureCallbacks, reader *iAudioCapture) uintptr {
 	ret, _, _ := syscall.SyscallN(
 		context.lpVtbl.RunCapture,
 		//3,
@@ -244,7 +244,7 @@ func (context *iContext) RunCapture(params *FullParams, callbacks *sCaptureCallb
 	return ret
 }
 
-func (context *iContext) GetResults(flags eResultFlags, pp **iTranscribeResult) uintptr {
+func (context *IContext) GetResults(flags eResultFlags, pp **ITranscribeResult) uintptr {
 	ret, _, _ := syscall.Syscall(
 		context.lpVtbl.GetResults,
 		3,
@@ -255,7 +255,7 @@ func (context *iContext) GetResults(flags eResultFlags, pp **iTranscribeResult) 
 	return ret
 }
 
-func (context *iContext) DetectSpeaker(time *sTimeInterval, result *eSpeakerChannel) uintptr {
+func (context *IContext) DetectSpeaker(time *sTimeInterval, result *eSpeakerChannel) uintptr {
 	ret, _, _ := syscall.Syscall(
 		context.lpVtbl.DetectSpeaker,
 		3,

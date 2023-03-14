@@ -13,19 +13,19 @@ import (
 type eTokenFlags uint32
 
 const (
-	tfNone    eTokenFlags = 0
-	tfSpecial             = 1
+	TfNone    eTokenFlags = 0
+	TfSpecial             = 1
 )
 
 type sTranscribeLength struct {
-	countSegments uint32
-	countTokens   uint32
+	CountSegments uint32
+	CountTokens   uint32
 }
 
 type sTimeSpan struct {
 
 	// The value is expressed in 100-nanoseconds ticks: compatible with System.Timespan, FILETIME, and many other things
-	ticks uint64
+	Ticks uint64
 
 	/*
 		operator sTimeSpanFields() const
@@ -44,51 +44,51 @@ type sTimeSpan struct {
 }
 
 type sTimeInterval struct {
-	begin sTimeSpan
-	end   sTimeSpan
+	Begin sTimeSpan
+	End   sTimeSpan
 }
 
 type sSegment struct {
 	// Segment text, null-terminated, and probably UTF-8 encoded
-	text *C.char
+	Text *C.char
 
 	// Start and end times of the segment
-	time sTimeInterval
+	Time sTimeInterval
 
 	// These two integers define the slice of the tokens in this segment, in the array returned by iTranscribeResult.getTokens method
-	firstToken  uint32
-	countTokens uint32
+	FirstToken  uint32
+	CountTokens uint32
 }
 
 type sSegmentArray []sSegment
 
-type sToken struct {
+type SToken struct {
 	// Token text, null-terminated, and usually UTF-8 encoded.
 	// I think for Chinese language the models sometimes outputs invalid UTF8 strings here, Unicode code points can be split between adjacent tokens in the same segment
 	// More info: https://github.com/ggerganov/whisper.cpp/issues/399
-	text *C.char
+	Text *C.char
 
 	// Start and end times of the token
-	time sTimeInterval
+	Time sTimeInterval
 	// Probability of the token
-	probability float32
+	Probability float32
 
 	// Probability of the timestamp token
-	probabilityTimestamp float32
+	ProbabilityTimestamp float32
 
 	// Sum of probabilities of all timestamp tokens
-	ptsum float32
+	Ptsum float32
 
 	// Voice length of the token
-	vlen float32
+	Vlen float32
 
 	// Token id
-	id int32
+	Id int32
 
-	flags eTokenFlags
+	Flags eTokenFlags
 }
 
-type sTokenArray []sToken
+type sTokenArray []SToken
 
 type iTranscribeResultVtbl struct {
 	QueryInterface uintptr
@@ -100,11 +100,11 @@ type iTranscribeResultVtbl struct {
 	getTokens   uintptr // () getToken*
 }
 
-type iTranscribeResult struct {
+type ITranscribeResult struct {
 	lpVtbl *iTranscribeResultVtbl
 }
 
-func (this *iTranscribeResult) AddRef() int32 {
+func (this *ITranscribeResult) AddRef() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.AddRef,
 		1,
@@ -114,7 +114,7 @@ func (this *iTranscribeResult) AddRef() int32 {
 	return int32(ret)
 }
 
-func (this *iTranscribeResult) Release() int32 {
+func (this *ITranscribeResult) Release() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.Release,
 		1,
@@ -124,7 +124,7 @@ func (this *iTranscribeResult) Release() int32 {
 	return int32(ret)
 }
 
-func (this *iTranscribeResult) GetSize() (*sTranscribeLength, error) {
+func (this *ITranscribeResult) GetSize() (*sTranscribeLength, error) {
 
 	var result sTranscribeLength
 
@@ -143,7 +143,7 @@ func (this *iTranscribeResult) GetSize() (*sTranscribeLength, error) {
 
 }
 
-func (this *iTranscribeResult) GetSegments(len uint32) []sSegment {
+func (this *ITranscribeResult) GetSegments(len uint32) []sSegment {
 
 	ret, _, _ := syscall.SyscallN(
 		this.lpVtbl.getSegments,
@@ -155,12 +155,12 @@ func (this *iTranscribeResult) GetSegments(len uint32) []sSegment {
 	return data
 }
 
-func (this *iTranscribeResult) GetTokens(len uint32) []sToken {
+func (this *ITranscribeResult) GetTokens(len uint32) []SToken {
 
 	ret, _, _ := syscall.SyscallN(
 		this.lpVtbl.getTokens,
 		uintptr(unsafe.Pointer(this)),
 	)
 
-	return unsafe.Slice((*sToken)(unsafe.Pointer(ret)), len)
+	return unsafe.Slice((*SToken)(unsafe.Pointer(ret)), len)
 }

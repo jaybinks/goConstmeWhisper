@@ -45,7 +45,7 @@ func (this *iMediaFoundation) Release() int32 {
 	return int32(ret)
 }
 
-func (this *iMediaFoundation) loadAudioFile(file string, stereo bool) (*iAudioBuffer, error) {
+func (this *iMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBuffer, error) {
 
 	var buffer *iAudioBuffer
 
@@ -98,7 +98,7 @@ func (this *iAudioBuffer) Release() int32 {
 	return int32(ret)
 }
 
-func (this *iAudioBuffer) countSamples() (uint32, error) {
+func (this *iAudioBuffer) CountSamples() (uint32, error) {
 
 	ret, _, err := syscall.SyscallN(
 		this.lpVtbl.countSamples,

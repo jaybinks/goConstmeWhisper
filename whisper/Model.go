@@ -56,8 +56,8 @@ func (this *Model) Release() int32 {
 	return int32(ret)
 }
 
-func (this *Model) CreateContext() (*iContext, error) {
-	var context *iContext
+func (this *Model) CreateContext() (*IContext, error) {
+	var context *IContext
 
 	ret, _, err := syscall.Syscall(
 		this.cStruct.lpVtbl.createContext,

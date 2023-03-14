@@ -13,18 +13,18 @@ import (
 type eLogLevel uint8
 
 const (
-	llError   eLogLevel = 0
-	llWarning           = 1
-	llInfo              = 2
-	llDebug             = 3
+	LlError   eLogLevel = 0
+	LlWarning           = 1
+	LlInfo              = 2
+	LlDebug             = 3
 )
 
 type eLogFlags uint8
 
 const (
-	lfNone              eLogFlags = 0
-	lfUseStandardError            = 1
-	lfSkipFormatMessage           = 2
+	LfNone              eLogFlags = 0
+	LfUseStandardError            = 1
+	LfSkipFormatMessage           = 2
 )
 
 type sLoggerSetup struct {

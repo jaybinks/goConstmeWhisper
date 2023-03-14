@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 
-	"github.com/jaybinks/goConstmeWhisper/whisper"
-	//whisper "github.com/jaybinks/goConstmeWhisper"
+	//"github.com/jaybinks/goConstmeWhisper/whisper"
+	whisper "github.com/jaybinks/goConstmeWhisper/whisper"
 )
 
 func main() {
 	LogSetup := initDefaultLogger()
-	ok, err := SetupLogger(&LogSetup)
+	ok, err := whisper.SetupLogger(&LogSetup)
 	if !ok {
 		fmt.Printf("Logger Error : %s", err.Error())
 	}
 
-	// Load Model
+	/*// Load Model
 	// -----------------------------------------------------------------
 	model, err := whisper.LoadWhisperModel(ModelFile)
 	if err != nil {
@@ -28,6 +28,6 @@ func main() {
 	} else {
 		fmt.Printf("%s Is NOT Multilingual\n", ModelFile)
 	}
-	s
+	*/
 
 }

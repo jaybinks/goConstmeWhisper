@@ -34,22 +34,6 @@ type sLoggerSetup struct {
 	flags   eLogFlags // eLoggerFlags
 }
 
-func initDefaultLogger() sLoggerSetup {
-	thislogger := sLoggerSetup{}
-
-	thislogger.sink = 0
-	thislogger.context = 0
-	thislogger.level = llDebug
-	thislogger.flags = lfUseStandardError
-
-	/*
-		cb := fnLoggerSink
-		thislogger.sink = syscall.NewCallback(cb)
-	*/
-
-	return thislogger
-}
-
 func fnLoggerSink(context uintptr, lvl eLogLevel, message *C.char) uintptr {
 
 	strmessage := C.GoString(message)

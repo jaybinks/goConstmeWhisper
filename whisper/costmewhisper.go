@@ -48,10 +48,22 @@ const (
 	JAY_MISSING_FILE                  = 0x80070002
 )
 
-func SetupLogger(setup *sLoggerSetup) (bool, error) {
+func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
+
+	setup := sLoggerSetup{}
+	setup.sink = 0
+	setup.context = 0
+	setup.level = level
+	setup.flags = flags
+
+	//cb := fnLoggerSink
+	if cb != nil {
+		setup.sink = syscall.NewCallback(cb)
+	}
+
 	res, _, err := setupLogger.Call(uintptr(unsafe.Pointer(setup)))
 
-	return windows.Handle(res) == windows.S_OK, err //error.E("setupLogger Error : " + err.Error())
+	return windows.Handle(res) == windows.S_OK, err
 }
 
 func LoadWhisperModel(path string) (*Model, error) {

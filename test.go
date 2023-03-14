@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	LogSetup := initDefaultLogger()
-	ok, err := whisper.SetupLogger(&LogSetup)
+
+	ok, err := whisper.SetupLogger(whisper.llDebug, whisper.lfUseStandardError, nil)
 	if !ok {
 		fmt.Printf("Logger Error : %s", err.Error())
 	}

@@ -22,7 +22,7 @@ const (
 type eLogFlags uint8
 
 const (
-	lfUndocumented      eLogFlags = 0
+	lfNone              eLogFlags = 0
 	lfUseStandardError            = 1
 	lfSkipFormatMessage           = 2
 )

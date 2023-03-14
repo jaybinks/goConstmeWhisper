@@ -13,18 +13,18 @@ import (
 type eLogLevel uint8
 
 const (
-	llError   eLogLevel = 0
-	llWarning           = 1
-	llInfo              = 2
-	llDebug             = 3
+	LlError   eLogLevel = 0
+	LlWarning           = 1
+	LlInfo              = 2
+	LlDebug             = 3
 )
 
 type eLogFlags uint8
 
 const (
-	lfNone              eLogFlags = 0
-	lfUseStandardError            = 1
-	lfSkipFormatMessage           = 2
+	LfUndocumented      eLogFlags = 0
+	LfUseStandardError            = 1
+	LfSkipFormatMessage           = 2
 )
 
 type sLoggerSetup struct {
@@ -32,6 +32,22 @@ type sLoggerSetup struct {
 	context uintptr   // void*
 	level   eLogLevel // eLogLevel
 	flags   eLogFlags // eLoggerFlags
+}
+
+func initDefaultLogger() sLoggerSetup {
+	thislogger := sLoggerSetup{}
+
+	thislogger.sink = 0
+	thislogger.context = 0
+	thislogger.level = LlDebug
+	thislogger.flags = LfUseStandardError
+
+	/*
+		cb := fnLoggerSink
+		thislogger.sink = syscall.NewCallback(cb)
+	*/
+
+	return thislogger
 }
 
 func fnLoggerSink(context uintptr, lvl eLogLevel, message *C.char) uintptr {

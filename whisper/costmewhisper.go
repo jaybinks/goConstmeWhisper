@@ -61,7 +61,7 @@ func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
 		setup.sink = syscall.NewCallback(cb)
 	}
 
-	res, _, err := setupLogger.Call(uintptr(unsafe.Pointer(setup)))
+	res, _, err := setupLogger.Call(uintptr(unsafe.Pointer(&setup)))
 
 	return windows.Handle(res) == windows.S_OK, err
 }

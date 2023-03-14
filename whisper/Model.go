@@ -56,7 +56,7 @@ func (this *Model) Release() int32 {
 	return int32(ret)
 }
 
-func (this *Model) createContext() (*iContext, error) {
+func (this *Model) CreateContext() (*iContext, error) {
 	var context *iContext
 
 	ret, _, err := syscall.Syscall(

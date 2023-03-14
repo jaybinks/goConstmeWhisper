@@ -6,9 +6,9 @@ package whisper
 type eSamplingStrategy uint32
 
 const (
-	ssGreedy eSamplingStrategy = iota
-	ssBeamSearch
-	ssINVALIDARG
+	SsGreedy eSamplingStrategy = iota
+	SsBeamSearch
+	SsINVALIDARG
 )
 
 type eFullParamsFlags uint32
@@ -50,7 +50,7 @@ func (this *FullParams) setCpuThreads(val int32) {
 	this.cStruct.cpuThreads = val
 }
 
-func (this *FullParams) addFlags(newflag eFullParamsFlags) {
+func (this *FullParams) AddFlags(newflag eFullParamsFlags) {
 	if this == nil {
 		return
 	} else if this.cStruct == nil {
@@ -60,7 +60,7 @@ func (this *FullParams) addFlags(newflag eFullParamsFlags) {
 	this.cStruct.Flags = this.cStruct.Flags | newflag
 }
 
-func (this *FullParams) removeFlags(newflag eFullParamsFlags) {
+func (this *FullParams) RemoveFlags(newflag eFullParamsFlags) {
 	if this == nil {
 		return
 	} else if this.cStruct == nil {

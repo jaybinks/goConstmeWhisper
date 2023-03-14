@@ -1,4 +1,4 @@
-module github.com/jaybinks/goConstmeWhisper/whisper
+module github.com/jaybinks/goConstmeWhisper
 
 go 1.20
 

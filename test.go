@@ -1,13 +1,12 @@
 package main
 
 import (
-	"C"
 	"fmt"
 	"log"
 	"math"
 	"unsafe"
 
-	whisper "github.com/jaybinks/goConstmeWhisper/whisper"
+	"github.com/jaybinks/goConstmeWhisper/whisper"
 )
 
 var k_colors = []string{
@@ -118,11 +117,8 @@ func newSegmentCallback(context *whisper.IContext, n_new uint32, user_data unsaf
 		for j := uint32(0); j < seg.CountTokens; j++ {
 			tok := tokens[seg.FirstToken+j]
 
-			//fmt.Print(C.GoString(v.text))
 			if (tok.Flags & whisper.TfSpecial) == 0 {
-				thistext := (*C.char)(unsafe.Pointer(tok.Text))
-
-				fmt.Printf("%s%s%s", k_colors[colorIndex(tok)], C.GoString(thistext), "\033[0m")
+				fmt.Printf("%s%s%s", k_colors[colorIndex(tok)], tok.Text(), "\033[0m")
 			}
 		}
 	}

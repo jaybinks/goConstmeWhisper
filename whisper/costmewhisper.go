@@ -93,9 +93,9 @@ func LoadWhisperModel(path string) (*Model, error) {
 
 }
 
-func DoinitMediaFoundation() (*iMediaFoundation, error) {
+func DoinitMediaFoundation() (*IMediaFoundation, error) {
 
-	var mediafoundation *iMediaFoundation
+	var mediafoundation *IMediaFoundation
 
 	// initMediaFoundation( iMediaFoundation** pp );
 	obj, _, _ := initMediaFoundation.Call(uintptr(unsafe.Pointer(&mediafoundation)))

@@ -1,5 +1,10 @@
 package whisper
 
+import (
+	"syscall"
+	"unsafe"
+)
+
 // https://github.com/Const-me/Whisper/blob/master/Whisper/API/sFullParams.h
 // https://github.com/Const-me/Whisper/blob/master/WhisperNet/API/Parameters.cs
 
@@ -68,6 +73,17 @@ func (this *FullParams) RemoveFlags(newflag eFullParamsFlags) {
 	}
 
 	this.cStruct.Flags = this.cStruct.Flags ^ newflag
+}
+
+type NewSegmentCallback_Type func(context *IContext, n_new uint32, user_data unsafe.Pointer) uintptr
+
+func (this *FullParams) SetNewSegmentCallback(cb NewSegmentCallback_Type) {
+	if this == nil {
+		return
+	} else if this.cStruct == nil {
+		return
+	}
+	this.cStruct.new_segment_callback = syscall.NewCallback(cb)
 }
 
 func (this *FullParams) TestDefaultsOK() bool {

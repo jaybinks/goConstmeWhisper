@@ -9,13 +9,13 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// https://github.com/Const-me/Whisper/blob/843a2a6ca6ea47c5ac4889a281badfc808d0ea01/Whisper/API/iMediaFoundation.h
+// https://github.com/Const-me/Whisper/blob/843a2a6ca6ea47c5ac4889a281badfc808d0ea01/Whisper/API/IMediaFoundation.h
 
-type iMediaFoundation struct {
-	lpVtbl *iMediaFoundationVtbl
+type IMediaFoundation struct {
+	lpVtbl *IMediaFoundationVtbl
 }
 
-type iMediaFoundationVtbl struct {
+type IMediaFoundationVtbl struct {
 	QueryInterface     uintptr
 	AddRef             uintptr
 	Release            uintptr
@@ -25,7 +25,7 @@ type iMediaFoundationVtbl struct {
 	openCaptureDevice  uintptr // ( LPCTSTR endpoint, const sCaptureParams& captureParams, iAudioCapture** pp );
 }
 
-func (this *iMediaFoundation) AddRef() int32 {
+func (this *IMediaFoundation) AddRef() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.AddRef,
 		1,
@@ -35,7 +35,7 @@ func (this *iMediaFoundation) AddRef() int32 {
 	return int32(ret)
 }
 
-func (this *iMediaFoundation) Release() int32 {
+func (this *IMediaFoundation) Release() int32 {
 	ret, _, _ := syscall.Syscall(
 		this.lpVtbl.Release,
 		1,
@@ -45,7 +45,7 @@ func (this *iMediaFoundation) Release() int32 {
 	return int32(ret)
 }
 
-func (this *iMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBuffer, error) {
+func (this *IMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBuffer, error) {
 
 	var buffer *iAudioBuffer
 

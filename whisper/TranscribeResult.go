@@ -50,7 +50,7 @@ type sTimeInterval struct {
 
 type sSegment struct {
 	// Segment text, null-terminated, and probably UTF-8 encoded
-	Text *C.char
+	text *C.char
 
 	// Start and end times of the segment
 	Time sTimeInterval
@@ -60,13 +60,17 @@ type sSegment struct {
 	CountTokens uint32
 }
 
+func (this *sSegment) Text() string {
+	return C.GoString(this.text)
+}
+
 type sSegmentArray []sSegment
 
 type SToken struct {
 	// Token text, null-terminated, and usually UTF-8 encoded.
 	// I think for Chinese language the models sometimes outputs invalid UTF8 strings here, Unicode code points can be split between adjacent tokens in the same segment
 	// More info: https://github.com/ggerganov/whisper.cpp/issues/399
-	Text *C.char
+	text *C.char
 
 	// Start and end times of the token
 	Time sTimeInterval
@@ -86,6 +90,10 @@ type SToken struct {
 	Id int32
 
 	Flags eTokenFlags
+}
+
+func (this *SToken) Text() string {
+	return C.GoString(this.text)
 }
 
 type sTokenArray []SToken

@@ -30,7 +30,7 @@ import "fmt"
 */
 
 var (
-	dll = syscall.NewLazyDLL("whisper.dll")
+	dll = syscall.NewLazyDLL("whisper.dll") // Todo wrap this in a class, check file exists, handle errors ... you know, just a few things.. AKA Stop being lazy
 
 	setupLogger           = dll.NewProc("setupLogger")
 	loadModel             = dll.NewProc("loadModel")
@@ -45,7 +45,6 @@ var (
 const (
 	E_INVALIDARG                      = 0x80070057
 	ERROR_HV_CPUID_FEATURE_VALIDATION = 0xC0350038
-	JAY_MISSING_FILE                  = 0x80070002
 )
 
 func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
@@ -56,7 +55,6 @@ func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
 	setup.level = level
 	setup.flags = flags
 
-	//cb := fnLoggerSink
 	if cb != nil {
 		setup.sink = syscall.NewCallback(cb)
 	}

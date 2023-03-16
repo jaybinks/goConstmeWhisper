@@ -108,12 +108,34 @@ func (context *IContext) RunFull(params *FullParams, buffer *iAudioBuffer) error
 	ret, _, _ := syscall.SyscallN(
 		context.lpVtbl.RunFull,
 		uintptr(unsafe.Pointer(context)),
+
 		uintptr(unsafe.Pointer(params.cStruct)),
 		uintptr(unsafe.Pointer(buffer)),
 	)
 
 	if windows.Handle(ret) != windows.S_OK {
 		fmt.Printf("RunFull failed: %s\n", syscall.Errno(ret).Error())
+		return errors.New(syscall.Errno(ret).Error())
+	}
+
+	return nil
+}
+
+func (context *IContext) RunStreamed(params *FullParams, buffer *iAudioReader) error {
+
+	cb := sProgressSink{}
+
+	//   runStreamed( const sFullParams& params, const sProgressSink& progress, const iAudioReader* reader );
+	ret, _, _ := syscall.SyscallN(
+		context.lpVtbl.RunStreamed,
+		uintptr(unsafe.Pointer(context)),
+		uintptr(unsafe.Pointer(params.cStruct)),
+		uintptr(unsafe.Pointer(&cb)), // No progress cb yet
+		uintptr(unsafe.Pointer(buffer)),
+	)
+
+	if windows.Handle(ret) != windows.S_OK {
+		fmt.Printf("RunStreamed failed: %s\n", syscall.Errno(ret).Error())
 		return errors.New(syscall.Errno(ret).Error())
 	}
 
@@ -220,17 +242,6 @@ func (context *IContext) GetModel() (*_IModel, error) {
 // ************************************************************************************************************************************************
 // Not really implemented / tested
 // ************************************************************************************************************************************************
-
-func (context *IContext) RunStreamed(params *FullParams, progress *sProgressSink, reader *iAudioReader) uintptr {
-	ret, _, _ := syscall.SyscallN(
-		context.lpVtbl.RunStreamed,
-		uintptr(unsafe.Pointer(context)),
-		uintptr(unsafe.Pointer(params)),
-		uintptr(unsafe.Pointer(progress)),
-		uintptr(unsafe.Pointer(reader)),
-	)
-	return ret
-}
 
 func (context *IContext) RunCapture(params *FullParams, callbacks *sCaptureCallbacks, reader *iAudioCapture) uintptr {
 	ret, _, _ := syscall.SyscallN(

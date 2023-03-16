@@ -19,8 +19,9 @@ type IMediaFoundationVtbl struct {
 	QueryInterface     uintptr
 	AddRef             uintptr
 	Release            uintptr
-	loadAudioFile      uintptr //( LPCTSTR path, bool stereo, iAudioBuffer** pp ) const;
+	loadAudioFile      uintptr // ( LPCTSTR path, bool stereo, iAudioBuffer** pp ) const;
 	openAudioFile      uintptr // ( LPCTSTR path, bool stereo, iAudioReader** pp );
+	loadAudioFileData  uintptr // ( const void* data, uint64_t size, bool stereo, iAudioReader** pp );  HRESULT
 	listCaptureDevices uintptr // ( pfnFoundCaptureDevices pfn, void* pv );
 	openCaptureDevice  uintptr // ( LPCTSTR endpoint, const sCaptureParams& captureParams, iAudioCapture** pp );
 }
@@ -45,6 +46,7 @@ func (this *IMediaFoundation) Release() int32 {
 	return int32(ret)
 }
 
+// ( LPCTSTR path, bool stereo, iAudioBuffer** pp ) const;
 func (this *IMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBuffer, error) {
 
 	var buffer *iAudioBuffer
@@ -55,7 +57,7 @@ func (this *IMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBu
 		this.lpVtbl.loadAudioFile,
 		uintptr(unsafe.Pointer(this)),
 		uintptr(unsafe.Pointer(UTFFileName)),
-		uintptr(1),
+		uintptr(1), // Todo ... Stereo !
 		uintptr(unsafe.Pointer(&buffer)))
 
 	if windows.Handle(ret) != windows.S_OK {
@@ -64,6 +66,49 @@ func (this *IMediaFoundation) LoadAudioFile(file string, stereo bool) (*iAudioBu
 	}
 
 	return buffer, nil
+}
+
+func (this *IMediaFoundation) OpenAudioFile(file string, stereo bool) (*iAudioReader, error) {
+
+	var buffer *iAudioReader
+
+	UTFFileName, _ := windows.UTF16PtrFromString(file)
+
+	ret, _, _ := syscall.SyscallN(
+		this.lpVtbl.openAudioFile,
+		uintptr(unsafe.Pointer(this)),
+		uintptr(unsafe.Pointer(UTFFileName)),
+		uintptr(1), // Todo ... Stereo !
+		uintptr(unsafe.Pointer(&buffer)))
+
+	if windows.Handle(ret) != windows.S_OK {
+		fmt.Printf("openAudioFile failed: %s\n", syscall.Errno(ret).Error())
+		return nil, syscall.Errno(ret)
+	}
+
+	return buffer, nil
+}
+
+func (this *IMediaFoundation) LoadAudioFileData(inbuffer *[]byte, stereo bool) (*iAudioReader, error) {
+
+	var reader *iAudioReader
+
+	// loadAudioFileData( const void* data, uint64_t size, bool stereo, iAudioReader** pp );
+	ret, _, _ := syscall.SyscallN(
+		this.lpVtbl.loadAudioFileData,
+		uintptr(unsafe.Pointer(this)),
+
+		uintptr(unsafe.Pointer(&(*inbuffer)[0])),
+		uintptr(uint64(len(*inbuffer))),
+		uintptr(1), // Todo ... Stereo !
+		uintptr(unsafe.Pointer(&reader)))
+
+	if windows.Handle(ret) != windows.S_OK {
+		fmt.Printf("LoadAudioFileData failed: %s\n", syscall.Errno(ret).Error())
+		return nil, syscall.Errno(ret)
+	}
+
+	return reader, nil
 }
 
 // ************************************************************
@@ -119,12 +164,47 @@ type iAudioReader struct {
 }
 
 type iAudioReaderVtbl struct {
-	QueryInterface  uintptr
-	AddRef          uintptr
-	Release         uintptr
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+
 	getDuration     uintptr // ( int64_t& rdi )
 	getReader       uintptr // ( IMFSourceReader** pp )
 	requestedStereo uintptr // ()
+}
+
+func (this *iAudioReader) AddRef() int32 {
+	ret, _, _ := syscall.SyscallN(
+		this.lpVtbl.AddRef,
+		uintptr(unsafe.Pointer(this)),
+	)
+	return int32(ret)
+}
+
+func (this *iAudioReader) Release() int32 {
+	ret, _, _ := syscall.SyscallN(
+		this.lpVtbl.Release,
+		uintptr(unsafe.Pointer(this)),
+	)
+	return int32(ret)
+}
+
+func (this *iAudioReader) GetDuration() (uint64, error) {
+
+	var rdi int64
+
+	ret, _, _ := syscall.SyscallN(
+		this.lpVtbl.getDuration,
+		uintptr(unsafe.Pointer(this)),
+		uintptr(unsafe.Pointer(&rdi)),
+	)
+
+	if windows.Handle(ret) != windows.S_OK {
+		fmt.Printf("LoadAudioFileData failed: %s\n", syscall.Errno(ret).Error())
+		return 0, syscall.Errno(ret)
+	}
+
+	return uint64(rdi), nil
 }
 
 // ************************************************************

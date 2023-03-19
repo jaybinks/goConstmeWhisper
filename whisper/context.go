@@ -51,7 +51,10 @@ type IContext struct {
 //type sFullParams struct{}
 
 // type iAudioBuffer struct{}
-type sProgressSink struct{}
+type sProgressSink struct {
+	pfn uintptr
+	pv  uintptr
+}
 
 // type iAudioReader struct{}
 type sCaptureCallbacks struct{}
@@ -121,7 +124,7 @@ func (context *IContext) RunFull(params *FullParams, buffer *iAudioBuffer) error
 	return nil
 }
 
-func (context *IContext) RunStreamed(params *FullParams, buffer *iAudioReader) error {
+func (context *IContext) RunStreamed(params *FullParams, reader *iAudioReader) error {
 
 	cb := sProgressSink{}
 
@@ -131,7 +134,7 @@ func (context *IContext) RunStreamed(params *FullParams, buffer *iAudioReader) e
 		uintptr(unsafe.Pointer(context)),
 		uintptr(unsafe.Pointer(params.cStruct)),
 		uintptr(unsafe.Pointer(&cb)), // No progress cb yet
-		uintptr(unsafe.Pointer(buffer)),
+		uintptr(unsafe.Pointer(reader)),
 	)
 
 	if windows.Handle(ret) != windows.S_OK {

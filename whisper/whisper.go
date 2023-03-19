@@ -12,7 +12,9 @@ import (
 	// Using lxn/win because its COM functions expose raw HRESULTs
 	"golang.org/x/sys/windows"
 )
-import "fmt"
+import (
+	"fmt"
+)
 
 /*
 	eModelImplementation - TranscribeStructs.h
@@ -29,25 +31,59 @@ import "fmt"
 	Reference = 3,
 */
 
-var (
-	dll = syscall.NewLazyDLL("whisper.dll") // Todo wrap this in a class, check file exists, handle errors ... you know, just a few things.. AKA Stop being lazy
-
-	setupLogger           = dll.NewProc("setupLogger")
-	loadModel             = dll.NewProc("loadModel")
-	initMediaFoundation   = dll.NewProc("initMediaFoundation")
-	findLanguageKeyW      = dll.NewProc("findLanguageKeyW")
-	findLanguageKeyA      = dll.NewProc("findLanguageKeyA")
-	getSupportedLanguages = dll.NewProc("getSupportedLanguages")
-)
-
 // https://learn.microsoft.com/en-us/windows/win32/seccrypto/common-hresult-values
 // https://pkg.go.dev/golang.org/x/sys/windows
 const (
 	E_INVALIDARG                      = 0x80070057
 	ERROR_HV_CPUID_FEATURE_VALIDATION = 0xC0350038
+
+	DLLName = "whisper.dll"
 )
 
-func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
+type Libwhisper struct {
+	dll *syscall.LazyDLL
+
+	proc_setupLogger         *syscall.LazyProc
+	proc_loadModel           *syscall.LazyProc
+	proc_initMediaFoundation *syscall.LazyProc
+	// proc_findLanguageKeyW      *syscall.LazyProc
+	// proc_findLanguageKeyA      *syscall.LazyProc
+	// proc_getSupportedLanguages *syscall.LazyProc
+}
+
+func New(level eLogLevel, flags eLogFlags, cb *any) (*Libwhisper, error) {
+	this := &Libwhisper{}
+
+	ver, err := GetFileVersion(DLLName)
+	if err != nil {
+		return nil, err
+	}
+
+	if ver.Major < 1 && ver.Minor < 9 {
+		return nil, errors.New("whisper.dll is lower than required 1.9")
+	}
+
+	fmt.Printf("Using whisper.dll version %d.%d\n", ver.Major, ver.Minor)
+
+	this.dll = syscall.NewLazyDLL(DLLName) // Todo wrap this in a class, check file exists, handle errors ... you know, just a few things.. AKA Stop being lazy
+
+	this.proc_setupLogger = this.dll.NewProc("setupLogger")
+	this.proc_loadModel = this.dll.NewProc("loadModel")
+	this.proc_initMediaFoundation = this.dll.NewProc("initMediaFoundation")
+	/*
+		this.proc_findLanguageKeyW = this.dll.NewProc("findLanguageKeyW")
+		this.proc_findLanguageKeyA = this.dll.NewProc("findLanguageKeyA")
+		this.proc_getSupportedLanguages = this.dll.NewProc("getSupportedLanguages")
+	*/
+
+	ok, err := this._setupLogger(level, flags, cb)
+	if !ok {
+		return nil, errors.New("Logger Error : " + err.Error())
+	}
+	return this, nil
+}
+
+func (this *Libwhisper) _setupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
 
 	setup := sLoggerSetup{}
 	setup.sink = 0
@@ -59,18 +95,27 @@ func SetupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
 		setup.sink = syscall.NewCallback(cb)
 	}
 
-	res, _, err := setupLogger.Call(uintptr(unsafe.Pointer(&setup)))
+	res, _, err := this.proc_setupLogger.Call(uintptr(unsafe.Pointer(&setup)))
 
-	return windows.Handle(res) == windows.S_OK, err
+	if windows.Handle(res) == windows.S_OK {
+		return true, nil
+	} else {
+		return false, err
+	}
 }
 
-func LoadWhisperModel(path string) (*Model, error) {
+func (this *Libwhisper) LoadModel(path string, aGPU ...string) (*Model, error) {
 	var modelptr *_IModel
 
 	whisperpath, _ := windows.UTF16PtrFromString(path)
 
-	setup := ModelSetup().AsCType()
-	obj, _, _ := loadModel.Call(uintptr(unsafe.Pointer(whisperpath)), uintptr(unsafe.Pointer(setup)), uintptr(unsafe.Pointer(nil)), uintptr(unsafe.Pointer(&modelptr)))
+	GPU := ""
+	if len(aGPU) == 1 {
+		GPU = aGPU[0]
+	}
+
+	setup := ModelSetup(GPU).AsCType()
+	obj, _, _ := this.proc_loadModel.Call(uintptr(unsafe.Pointer(whisperpath)), uintptr(unsafe.Pointer(setup)), uintptr(unsafe.Pointer(nil)), uintptr(unsafe.Pointer(&modelptr)))
 
 	if windows.Handle(obj) != windows.S_OK {
 		fmt.Printf("loadModel failed: %s\n", syscall.Errno(obj).Error())
@@ -91,12 +136,12 @@ func LoadWhisperModel(path string) (*Model, error) {
 
 }
 
-func DoinitMediaFoundation() (*IMediaFoundation, error) {
+func (this *Libwhisper) InitMediaFoundation() (*IMediaFoundation, error) {
 
 	var mediafoundation *IMediaFoundation
 
 	// initMediaFoundation( iMediaFoundation** pp );
-	obj, _, _ := initMediaFoundation.Call(uintptr(unsafe.Pointer(&mediafoundation)))
+	obj, _, _ := this.proc_initMediaFoundation.Call(uintptr(unsafe.Pointer(&mediafoundation)))
 
 	if windows.Handle(obj) != windows.S_OK {
 		fmt.Printf("initMediaFoundation failed: %s\n", syscall.Errno(obj).Error())

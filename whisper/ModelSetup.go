@@ -47,23 +47,29 @@ type _sModelSetup struct {
 	adapter uintptr
 }
 
-func ModelSetup() *sModelSetup {
+func ModelSetup(GPU string) *sModelSetup {
 	this := sModelSetup{}
 	this.impl = mi_GPU
 	this.flags = 0
-	//this.adapter = "NVIDIA GeForce GTX 1050 Ti"
-	this.adapter = "Radeon RX 580 Series"
+	this.adapter = GPU
+
 	return &this
 }
 
 func (this *sModelSetup) AsCType() *_sModelSetup {
+	var err error
+
 	ctype := _sModelSetup{}
 	ctype.impl = this.impl
 	ctype.flags = this.flags
+	ctype.adapter = 0
 
 	// Conver Go String to wchar_t, AKA UTF-16
-	UTF16str, err := windows.UTF16PtrFromString(this.adapter)
-	ctype.adapter = uintptr(unsafe.Pointer(UTF16str))
+	if this.adapter != "" {
+		var UTF16str *uint16
+		UTF16str, err = windows.UTF16PtrFromString(this.adapter)
+		ctype.adapter = uintptr(unsafe.Pointer(UTF16str))
+	}
 
 	if err != nil {
 		return nil

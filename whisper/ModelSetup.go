@@ -28,10 +28,28 @@ const (
 type eGpuModelFlags uint32
 
 const (
-	gmf_Wave32            eGpuModelFlags = 1
-	gmf_Wave64            eGpuModelFlags = 2
-	gmf_NoReshapedMatMul  eGpuModelFlags = 4
+	// <summary>Equivalent to <c>Wave32 | NoReshapedMatMul</c> on Intel and nVidia GPUs,<br/>
+	// and <c>Wave64 | UseReshapedMatMul</c> on AMD GPUs</summary>
+	gmf_None eGpuModelFlags = 0
+
+	// <summary>Use Wave32 version of compute shaders even on AMD GPUs</summary>
+	// <remarks>Incompatible with <see cref="Wave64" /></remarks>
+	gmf_Wave32 eGpuModelFlags = 1
+
+	// <summary>Use Wave64 version of compute shaders even on nVidia and Intel GPUs</summary>
+	// <remarks>Incompatible with <see cref="Wave32" /></remarks>
+	gmf_Wave64 eGpuModelFlags = 2
+
+	// <summary>Do not use reshaped matrix multiplication shaders on AMD GPUs</summary>
+	// <remarks>Incompatible with <see cref="UseReshapedMatMul" /></remarks>
+	gmf_NoReshapedMatMul eGpuModelFlags = 4
+
+	// <summary>Use reshaped matrix multiplication shaders even on nVidia and Intel GPUs</summary>
+	// <remarks>Incompatible with <see cref="NoReshapedMatMul" /></remarks>
 	gmf_UseReshapedMatMul eGpuModelFlags = 8
+
+	// <summary>Create GPU tensors in a way which allows sharing across D3D devices</summary>
+	gmf_Cloneable eGpuModelFlags = 0x10
 )
 
 // struct sModelSetup
@@ -47,13 +65,17 @@ type _sModelSetup struct {
 	adapter uintptr
 }
 
-func ModelSetup(GPU string) *sModelSetup {
+func ModelSetup(flags eGpuModelFlags, GPU string) *sModelSetup {
 	this := sModelSetup{}
 	this.impl = mi_GPU
-	this.flags = 0
+	this.flags = flags
 	this.adapter = GPU
 
 	return &this
+}
+
+func (this *sModelSetup) isFlagSet(flag eGpuModelFlags) bool {
+	return (this.flags & flag) == 0
 }
 
 func (this *sModelSetup) AsCType() *_sModelSetup {

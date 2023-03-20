@@ -41,7 +41,9 @@ const (
 )
 
 type Libwhisper struct {
-	dll *syscall.LazyDLL
+	dll            *syscall.LazyDLL
+	ver            WinVersion
+	existing_model map[string]*Model
 
 	proc_setupLogger         *syscall.LazyProc
 	proc_loadModel           *syscall.LazyProc
@@ -51,19 +53,24 @@ type Libwhisper struct {
 	// proc_getSupportedLanguages *syscall.LazyProc
 }
 
+var singleton_whisper *Libwhisper = nil
+
 func New(level eLogLevel, flags eLogFlags, cb *any) (*Libwhisper, error) {
+	if singleton_whisper != nil {
+		return singleton_whisper, nil
+	}
+
+	var err error
 	this := &Libwhisper{}
 
-	ver, err := GetFileVersion(DLLName)
+	this.ver, err = GetFileVersion(DLLName)
 	if err != nil {
 		return nil, err
 	}
 
-	if ver.Major < 1 && ver.Minor < 9 {
+	if this.ver.Major < 1 && this.ver.Minor < 9 {
 		return nil, errors.New("whisper.dll is lower than required 1.9")
 	}
-
-	fmt.Printf("Using whisper.dll version %d.%d\n", ver.Major, ver.Minor)
 
 	this.dll = syscall.NewLazyDLL(DLLName) // Todo wrap this in a class, check file exists, handle errors ... you know, just a few things.. AKA Stop being lazy
 
@@ -80,7 +87,15 @@ func New(level eLogLevel, flags eLogFlags, cb *any) (*Libwhisper, error) {
 	if !ok {
 		return nil, errors.New("Logger Error : " + err.Error())
 	}
-	return this, nil
+
+	this.existing_model = make(map[string]*Model)
+	singleton_whisper = this
+
+	return singleton_whisper, nil
+}
+
+func (this *Libwhisper) SupportsMultiThread() bool {
+	return this.ver.Major >= 1 && this.ver.Minor >= 10
 }
 
 func (this *Libwhisper) _setupLogger(level eLogLevel, flags eLogFlags, cb *any) (bool, error) {
@@ -114,8 +129,20 @@ func (this *Libwhisper) LoadModel(path string, aGPU ...string) (*Model, error) {
 		GPU = aGPU[0]
 	}
 
-	setup := ModelSetup(GPU).AsCType()
-	obj, _, _ := this.proc_loadModel.Call(uintptr(unsafe.Pointer(whisperpath)), uintptr(unsafe.Pointer(setup)), uintptr(unsafe.Pointer(nil)), uintptr(unsafe.Pointer(&modelptr)))
+	setup := ModelSetup(gmf_Cloneable, GPU)
+
+	// Construct our map hash
+	singleton_hash := GPU + "|" + path
+	if this.existing_model[singleton_hash] != nil {
+		ClonedModel, err := this.existing_model[singleton_hash].Clone()
+		if ClonedModel != nil {
+			return NewModel(setup, ClonedModel), nil
+		} else {
+			return nil, err
+		}
+	}
+
+	obj, _, _ := this.proc_loadModel.Call(uintptr(unsafe.Pointer(whisperpath)), uintptr(unsafe.Pointer(setup.AsCType())), uintptr(unsafe.Pointer(nil)), uintptr(unsafe.Pointer(&modelptr)))
 
 	if windows.Handle(obj) != windows.S_OK {
 		fmt.Printf("loadModel failed: %s\n", syscall.Errno(obj).Error())
@@ -130,10 +157,11 @@ func (this *Libwhisper) LoadModel(path string, aGPU ...string) (*Model, error) {
 		return nil, errors.New("loadModel method table is nil")
 	}
 
-	model := NewModel(modelptr)
+	model := NewModel(setup, modelptr)
+
+	this.existing_model[singleton_hash] = model
 
 	return model, nil
-
 }
 
 func (this *Libwhisper) InitMediaFoundation() (*IMediaFoundation, error) {

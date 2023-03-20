@@ -1,6 +1,7 @@
 package whisper
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -11,6 +12,7 @@ import (
 // External - Go version of the struct
 type Model struct {
 	cStruct *_IModel
+	setup   *sModelSetup
 }
 
 // Internal - C Version of the structs
@@ -28,10 +30,12 @@ type IModelVtbl struct {
 	isMultilingual   uintptr //() = 0;
 	getSpecialTokens uintptr //( SpecialTokens& rdi ) = 0;
 	stringFromToken  uintptr //( whisper_token token ) = 0;
+	clone            uintptr //( iModel** rdi ) = 0;
 }
 
-func NewModel(cstruct *_IModel) *Model {
+func NewModel(setup *sModelSetup, cstruct *_IModel) *Model {
 	this := Model{}
+	this.setup = setup
 	this.cStruct = cstruct
 	return &this
 }
@@ -84,4 +88,26 @@ func (this *Model) IsMultilingual() bool {
 	)
 
 	return bool(windows.Handle(ret) == windows.S_OK)
+}
+
+func (this *Model) Clone() (*_IModel, error) {
+
+	if this.setup.isFlagSet(gmf_Cloneable) {
+		return nil, errors.New("Model is not cloneable")
+	}
+	//this.Cloneable ?
+
+	var modelptr *_IModel
+
+	ret, _, _ := syscall.SyscallN(
+		this.cStruct.lpVtbl.clone,
+		uintptr(unsafe.Pointer(this.cStruct)),
+		uintptr(unsafe.Pointer(&modelptr)),
+	)
+
+	if windows.Handle(ret) == windows.S_OK {
+		return modelptr, nil
+	} else {
+		return nil, errors.New("Model.Clone() failed : " + syscall.Errno(ret).Error())
+	}
 }

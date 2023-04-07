@@ -69,7 +69,7 @@ func New(level eLogLevel, flags eLogFlags, cb *any) (*Libwhisper, error) {
 	}
 
 	if this.ver.Major < 1 && this.ver.Minor < 9 {
-		return nil, errors.New("whisper.dll is lower than required 1.9")
+		return nil, errors.New("This library requires whisper.dll version 1.9 or higher.") // or less than 1.11 for now .. because the API changed
 	}
 
 	this.dll = syscall.NewLazyDLL(DLLName) // Todo wrap this in a class, check file exists, handle errors ... you know, just a few things.. AKA Stop being lazy
@@ -92,6 +92,10 @@ func New(level eLogLevel, flags eLogFlags, cb *any) (*Libwhisper, error) {
 	singleton_whisper = this
 
 	return singleton_whisper, nil
+}
+
+func (this *Libwhisper) Version() string {
+	return fmt.Sprintf("%d.%d.%d.%d.", this.ver.Major, this.ver.Minor, this.ver.Patch, this.ver.Build)
 }
 
 func (this *Libwhisper) SupportsMultiThread() bool {

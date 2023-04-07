@@ -31,6 +31,13 @@ const (
 	FlagSpeedupAudio                     = 1 << 8
 )
 
+type EWhisperHWND uintptr
+
+const (
+	S_OK    EWhisperHWND = 0
+	S_FALSE EWhisperHWND = 1
+)
+
 type FullParams struct {
 	cStruct *_FullParams
 }
@@ -55,6 +62,10 @@ func (this *FullParams) setCpuThreads(val int32) {
 	this.cStruct.cpuThreads = val
 }
 
+func (this *FullParams) SetMaxTextCTX(val int32) {
+	this.cStruct.n_max_text_ctx = val
+}
+
 func (this *FullParams) AddFlags(newflag eFullParamsFlags) {
 	if this == nil {
 		return
@@ -75,7 +86,8 @@ func (this *FullParams) RemoveFlags(newflag eFullParamsFlags) {
 	this.cStruct.Flags = this.cStruct.Flags ^ newflag
 }
 
-type NewSegmentCallback_Type func(context *IContext, n_new uint32, user_data unsafe.Pointer) uintptr
+/*using pfnNewSegment = HRESULT( __cdecl* )( iContext* ctx, uint32_t n_new, void* user_data ) noexcept;*/
+type NewSegmentCallback_Type func(context *IContext, n_new uint32, user_data unsafe.Pointer) EWhisperHWND
 
 func (this *FullParams) SetNewSegmentCallback(cb NewSegmentCallback_Type) {
 	if this == nil {
@@ -84,6 +96,21 @@ func (this *FullParams) SetNewSegmentCallback(cb NewSegmentCallback_Type) {
 		return
 	}
 	this.cStruct.new_segment_callback = syscall.NewCallback(cb)
+}
+
+/*
+Return S_OK to proceed, or S_FALSE to stop the process
+*/
+type EncoderBeginCallback_Type func(context *IContext, user_data unsafe.Pointer) EWhisperHWND
+
+func (this *FullParams) SetEncoderBeginCallback(cb EncoderBeginCallback_Type) {
+	if this == nil {
+		return
+	} else if this.cStruct == nil {
+		return
+	}
+
+	this.cStruct.encoder_begin_callback = syscall.NewCallback(cb)
 }
 
 func (this *FullParams) TestDefaultsOK() bool {

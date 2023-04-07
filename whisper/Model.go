@@ -27,6 +27,7 @@ type IModelVtbl struct {
 	Release        uintptr
 
 	createContext    uintptr //( iContext** pp ) = 0;
+	tokenize         uintptr /* HRESULT __stdcall tokenize( const char* text, pfnDecodedTokens pfn, void* pv ); */
 	isMultilingual   uintptr //() = 0;
 	getSpecialTokens uintptr //( SpecialTokens& rdi ) = 0;
 	stringFromToken  uintptr //( whisper_token token ) = 0;
@@ -63,12 +64,17 @@ func (this *Model) Release() int32 {
 func (this *Model) CreateContext() (*IContext, error) {
 	var context *IContext
 
-	ret, _, err := syscall.Syscall(
+	/*
+		ret, _, err := syscall.Syscall(
+			this.cStruct.lpVtbl.createContext,
+			2, // Why was this 1, rather than 2 ?? 1 seemed to work fine
+			uintptr(unsafe.Pointer(this.cStruct)),
+			uintptr(unsafe.Pointer(&context)),
+			0)*/
+	ret, _, err := syscall.SyscallN(
 		this.cStruct.lpVtbl.createContext,
-		2, // Why was this 1, rather than 2 ?? 1 seemed to work fine
 		uintptr(unsafe.Pointer(this.cStruct)),
-		uintptr(unsafe.Pointer(&context)),
-		0)
+		uintptr(unsafe.Pointer(&context)))
 
 	if windows.Handle(ret) != windows.S_OK {
 		fmt.Printf("createContext failed: %w", err.Error())

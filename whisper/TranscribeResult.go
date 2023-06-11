@@ -170,5 +170,9 @@ func (this *ITranscribeResult) GetTokens(len uint32) []SToken {
 		uintptr(unsafe.Pointer(this)),
 	)
 
-	return unsafe.Slice((*SToken)(unsafe.Pointer(ret)), len)
+	if unsafe.Pointer(ret) != nil {
+		return unsafe.Slice((*SToken)(unsafe.Pointer(ret)), len)
+	} else {
+		return []SToken{}
+	}
 }
